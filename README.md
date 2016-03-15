@@ -1,5 +1,7 @@
 SuperDuo project has two projects - Football Scores and Alexandria barcode scanner app.
 
+Submitted by: Madhuri Athota
+
 # Football Scores
 This project is part of Super Duo project.
 
@@ -9,7 +11,6 @@ This project is part of Super Duo project.
 Football Scores displays foot ball data of all major european leagues.  By data I mean fixtures, teams, players, results 
 and more. All this data is provided by api.football-data.org via an easy-to-use RESTful API in JSON format.
 
-Submitted by: Madhuri Athota
 
 # Football Scores app changes
 
@@ -38,6 +39,13 @@ GIF created with [LiceCap](http://www.cockos.com/licecap/).
 # Alexandria
 This project is part of Super Duo project.
 
+# Assignment - Alexandria
+Alexandria is a barcode scanner app. Books barcodes can be added by capturing the bar code or entering the ISBN number. With ISBN number the book details are fetched.
+
+# Alexandria app changes
+1. Scan functionality was not working previously. Fixed this issue.
+2. Deleting the book from detail view navigates back to books list view. The deleted book is still shown in the list. Fixed this bug.
+3. If there is no network connection, Alexandria app crashes. Fixed this issue.
 
 ## License
 
