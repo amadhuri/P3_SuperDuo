@@ -2,11 +2,15 @@ package it.jaschke.alexandria.services;
 
 import android.app.IntentService;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
+import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -37,6 +41,8 @@ public class BookService extends IntentService {
     public static final String DELETE_BOOK = "it.jaschke.alexandria.services.action.DELETE_BOOK";
 
     public static final String EAN = "it.jaschke.alexandria.services.extra.EAN";
+    public static final String NOTIFICATIION = "it.jaschke.alexandria.services.receiver";
+    public static final String RESULT  = "result";
 
     public BookService() {
         super("Alexandria");
@@ -64,6 +70,12 @@ public class BookService extends IntentService {
         if(ean!=null) {
             getContentResolver().delete(AlexandriaContract.BookEntry.buildBookUri(Long.parseLong(ean)), null, null);
         }
+    }
+
+    private void sendResult(boolean result) {
+        Intent intent = new Intent(NOTIFICATIION);
+        intent.putExtra(RESULT, result);
+        sendBroadcast(intent);
     }
 
     /**
@@ -95,6 +107,11 @@ public class BookService extends IntentService {
         BufferedReader reader = null;
         String bookJsonString = null;
 
+        if( checkInternetConnection() == false ) {
+            Toast.makeText(getApplicationContext(),R.string.no_network,Toast.LENGTH_LONG).show();
+            sendResult(false);
+            return;
+        }
         try {
             final String FORECAST_BASE_URL = "https://www.googleapis.com/books/v1/volumes?";
             final String QUERY_PARAM = "q";
@@ -230,4 +247,17 @@ public class BookService extends IntentService {
             values= new ContentValues();
         }
     }
- }
+
+    private boolean checkInternetConnection() {
+
+        ConnectivityManager cm =
+                (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        boolean isConnected = activeNetwork != null &&
+                activeNetwork.isConnectedOrConnecting();
+        return isConnected;
+
+    }
+
+}

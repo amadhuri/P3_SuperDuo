@@ -1,8 +1,10 @@
 package it.jaschke.alexandria;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -48,6 +50,16 @@ public class AddBook extends Fragment implements LoaderManager.LoaderCallbacks<C
     private String mScanFormat = "Format:";
     private String mScanContents = "Contents:";
 
+    private BroadcastReceiver receiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+
+            Bundle bundle = intent.getExtras();
+            if ((bundle != null) && (bundle.getBoolean(BookService.RESULT) == false) ) {
+                Toast.makeText(getActivity().getApplicationContext(),R.string.no_network ,Toast.LENGTH_LONG).show();
+            }
+        }
+    };
 
 
     public AddBook(){
@@ -59,6 +71,12 @@ public class AddBook extends Fragment implements LoaderManager.LoaderCallbacks<C
         if(ean!=null) {
             outState.putString(EAN_CONTENT, ean.getText().toString());
         }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        getActivity().getApplicationContext().registerReceiver(receiver, new IntentFilter(BookService.NOTIFICATIION));
     }
 
     @Override
@@ -222,7 +240,7 @@ public class AddBook extends Fragment implements LoaderManager.LoaderCallbacks<C
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == RC_BARCODE_CAPTURE) {
-            if (resultCode == CommonStatusCodes.SUCCESS) {
+            if (resultCode == CommonStatusCodes.SUCCESS && (data != null)) {
                 Toast.makeText(getActivity().getApplication().getApplicationContext(), "Barcode captured", Toast.LENGTH_SHORT).show();
                 Barcode barcode = data.getParcelableExtra(BarcodeCaptureActivity.BarcodeObject);
                 ean.setText(barcode.displayValue);
