@@ -2,6 +2,7 @@ package it.jaschke.alexandria;
 
 
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -10,6 +11,7 @@ import android.support.v4.content.CursorLoader;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.widget.ShareActionProvider;
+import android.util.Log;
 import android.util.Patterns;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -33,6 +35,7 @@ public class BookDetail extends Fragment implements LoaderManager.LoaderCallback
     private String ean;
     private String bookTitle;
     private ShareActionProvider shareActionProvider;
+    private static final String TAG = BookDetail.class.getSimpleName();
 
     public BookDetail(){
     }
@@ -40,6 +43,7 @@ public class BookDetail extends Fragment implements LoaderManager.LoaderCallback
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.e(TAG, "MAD onCreate called");
         setHasOptionsMenu(true);
     }
 
@@ -48,11 +52,12 @@ public class BookDetail extends Fragment implements LoaderManager.LoaderCallback
     public View onCreateView(final LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
         Bundle arguments = getArguments();
+        Log.e(TAG, "MAD onCreateView called");
         if (arguments != null) {
             ean = arguments.getString(BookDetail.EAN_KEY);
+            Log.e(TAG, "MAD onCreateView restarting loader called");
             getLoaderManager().restartLoader(LOADER_ID, null, this);
         }
-
         rootView = inflater.inflate(R.layout.fragment_full_book, container, false);
         rootView.findViewById(R.id.delete_button).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -68,17 +73,33 @@ public class BookDetail extends Fragment implements LoaderManager.LoaderCallback
         return rootView;
     }
 
-
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        Log.e(TAG, "MAD onCreateOptionsMenu called bookTitle:"+bookTitle);
         inflater.inflate(R.menu.book_detail, menu);
 
         MenuItem menuItem = menu.findItem(R.id.action_share);
-        shareActionProvider = (ShareActionProvider) MenuItemCompat.getActionProvider(menuItem);
+        shareActionProvider = (ShareActionProvider)MenuItemCompat.getActionProvider(menuItem);
+
+        if (bookTitle != null) { //loading finished but shareIntent not set
+            Intent shareIntent = createShareIntent();
+            shareActionProvider.setShareIntent(shareIntent);
+        }
+
+    }
+
+    private Intent createShareIntent() {
+
+        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+        shareIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
+        shareIntent.setType("text/plain");
+        shareIntent.putExtra(Intent.EXTRA_TEXT, getString(R.string.share_text) + bookTitle);
+        return shareIntent;
     }
 
     @Override
     public android.support.v4.content.Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        Log.e(TAG, "MAD onCreateLoader called");
         return new CursorLoader(
                 getActivity(),
                 AlexandriaContract.BookEntry.buildFullBookUri(Long.parseLong(ean)),
@@ -91,6 +112,7 @@ public class BookDetail extends Fragment implements LoaderManager.LoaderCallback
 
     @Override
     public void onLoadFinished(android.support.v4.content.Loader<Cursor> loader, Cursor data) {
+        Log.e(TAG, "MAD onLoadFinished called");
         if (!data.moveToFirst()) {
             return;
         }
@@ -98,11 +120,10 @@ public class BookDetail extends Fragment implements LoaderManager.LoaderCallback
         bookTitle = data.getString(data.getColumnIndex(AlexandriaContract.BookEntry.TITLE));
         ((TextView) rootView.findViewById(R.id.fullBookTitle)).setText(bookTitle);
 
-        Intent shareIntent = new Intent(Intent.ACTION_SEND);
-        shareIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
-        shareIntent.setType("text/plain");
-        shareIntent.putExtra(Intent.EXTRA_TEXT, getString(R.string.share_text)+bookTitle);
-        shareActionProvider.setShareIntent(shareIntent);
+        if( shareActionProvider != null) {
+            Intent shareIntent = createShareIntent();
+            shareActionProvider.setShareIntent(shareIntent);
+        }
 
         String bookSubTitle = data.getString(data.getColumnIndex(AlexandriaContract.BookEntry.SUBTITLE));
         ((TextView) rootView.findViewById(R.id.fullBookSubTitle)).setText(bookSubTitle);
@@ -123,9 +144,9 @@ public class BookDetail extends Fragment implements LoaderManager.LoaderCallback
         String categories = data.getString(data.getColumnIndex(AlexandriaContract.CategoryEntry.CATEGORY));
         ((TextView) rootView.findViewById(R.id.categories)).setText(categories);
 
-        if(rootView.findViewById(R.id.right_container)!=null){
+        /*if(rootView.findViewById(R.id.right_container)!=null){
             rootView.findViewById(R.id.backButton).setVisibility(View.INVISIBLE);
-        }
+        }*/
 
     }
 
